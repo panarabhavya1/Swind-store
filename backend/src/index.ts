@@ -40,6 +40,6 @@ if(fs.existsSync(publicDir)){
 
     res.sendFile(path.join(publicDir, "index.html"), (err) => next(err));
   });
-}
+} // check req from frontend and serve index.html for any route that doesn't start with /api or /webhooks
 
 app.listen(env.PORT,()=> console.log(`Server is running on port ${env.PORT}`));
