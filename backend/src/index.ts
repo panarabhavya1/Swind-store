@@ -8,6 +8,7 @@ import path from "node:path";
 import { clerkMiddleware } from "@clerk/express";
 import { clerkWebhookHandler } from "./webhooks/clerk";
 import { getEnv } from "./lib/env";
+import keepAliveCron from "./lib/cron";
 
 const env = getEnv()
 const app = express();
@@ -22,6 +23,10 @@ app.post("/webhooks/clerk", rawJson, (req, res) => {
 app.use(express.json()); //allowed to use json in request body
 app.use(cors()); //allow cross-origin requests
 app.use(clerkMiddleware()); // Use Clerk middleware to handle authentication
+
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 const publicDir = path.join(process.cwd(), "public");
 if(fs.existsSync(publicDir)){
@@ -42,4 +47,9 @@ if(fs.existsSync(publicDir)){
   });
 } // check req from frontend and serve index.html for any route that doesn't start with /api or /webhooks
 
-app.listen(env.PORT,()=> console.log(`Server is running on port ${env.PORT}`));
+app.listen(env.PORT, () => {
+  console.log("Listening on port:", env.PORT);
+  if (env.NODE_ENV === "production") {
+    keepAliveCron.start();
+  }
+});
