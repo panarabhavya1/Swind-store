@@ -30,7 +30,7 @@ export async function createCheckout(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const parsed = cartSchema.safeParse(req.body);//safeparse the request body to validate the cart items
+    const parsed = cartSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid cart", details: parsed.error.flatten() });
       return;
@@ -73,7 +73,7 @@ export async function createCheckout(req: Request, res: Response, next: NextFunc
         quantity: line.quantity,
         unitPriceCents: p.priceCents,
       });
-    }// calculate price and prepare checkout session lines
+    }
 
     if (totalCents < 10) {
       res.status(400).json({

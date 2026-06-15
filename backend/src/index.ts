@@ -1,6 +1,6 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import "dotenv/config";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -11,17 +11,18 @@ import { clerkMiddleware } from "@clerk/express";
 import { clerkWebhookHandler } from "./webhooks/clerk";
 import { getEnv } from "./lib/env";
 import keepAliveCron from "./lib/cron";
-import meRouter from "./routes/meRouter";
+
 import productRouter from "./routes/productRouter";
+import meRouter from "./routes/meRouter";
 import streamRouter from "./routes/streamRouter";
-import checkoutRouter from "./routes/checkoutRouter";
+import chekoutRouter from "./routes/chekoutRouter";
 import adminRouter from "./routes/adminRouter";
 import orderRouter from "./routes/orderRouter";
 
 import { polarWebhookHandler } from "./webhooks/polar";
 import { sentryClerkUserMiddleware } from "./middleware/sentryClerkUser";
 
-const env = getEnv()
+const env = getEnv();
 const app = express();
 
 const rawJson = express.raw({ type: "application/json", limit: "1mb" });
@@ -30,14 +31,17 @@ const rawJson = express.raw({ type: "application/json", limit: "1mb" });
 app.post("/webhooks/clerk", rawJson, (req, res) => {
   void clerkWebhookHandler(req, res);
 });
-
 app.post("/webhooks/polar", rawJson, (req, res) => {
+  console.log("Incoming /webhooks/polar", {
+    headers: { "x-dev-skip-verify": req.headers["x-dev-skip-verify"], "content-type": req.headers["content-type"] },
+    length: (req.body instanceof Buffer ? req.body.length : String(req.body).length),
+  });
   void polarWebhookHandler(req, res);
 });
 
-app.use(express.json()); //allowed to use json in request body
-app.use(cors()); //allow cross-origin requests
-app.use(clerkMiddleware()); // Use Clerk middleware to handle authentication
+app.use(express.json());
+app.use(cors());
+app.use(clerkMiddleware());
 app.use(sentryClerkUserMiddleware);
 
 app.get("/health", (_req, res) => {
@@ -47,13 +51,13 @@ app.get("/health", (_req, res) => {
 app.use("/api/me", meRouter);
 app.use("/api/products", productRouter);
 app.use("/api/stream", streamRouter);
-app.use("/api/checkout", checkoutRouter);
+app.use("/api/checkout", chekoutRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/orders", orderRouter);
 
 const publicDir = path.join(process.cwd(), "public");
-if(fs.existsSync(publicDir)){
-  app.use(express.static(publicDir)); // Serve static files from the "public" directory
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
 
   app.get("/{*any}", (req, res, next) => {
     if (req.method !== "GET" && req.method !== "HEAD") {
@@ -68,11 +72,11 @@ if(fs.existsSync(publicDir)){
 
     res.sendFile(path.join(publicDir, "index.html"), (err) => next(err));
   });
-} // check req from frontend and serve index.html for any route that doesn't start with /api or /webhooks
+}
 
 // sentry will be attached to the response object
 Sentry.setupExpressErrorHandler(app);
-// sentry is detect error and inform dev.
+
 app.use(
   (_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const sentryId = (res as express.Response & { sentry?: string }).sentry;

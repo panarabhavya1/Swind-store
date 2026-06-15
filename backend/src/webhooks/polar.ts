@@ -86,7 +86,7 @@ export async function polarWebhookHandler(req: Request, res: Response) {
     if (!env.POLAR_WEBHOOK_SECRET) {
       res.status(503).send("Polar webhooks not configured");
       return;
-    }// check polar webhook is configured or not 
+    }
 
     const raw = req.body instanceof Buffer ? req.body : Buffer.from(String(req.body));
     const wh = new Webhook(Buffer.from(env.POLAR_WEBHOOK_SECRET, "utf8").toString("base64"));
